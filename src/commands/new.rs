@@ -30,6 +30,14 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
     let file_date = date.date();
     let path = diary::entries_dir(&dir).join(format!("{}.md", file_date.format("%Y-%m-%d")));
 
+    // If an entry already exists for this day, skip the prompts entirely and
+    // just open the whole file for editing.
+    if path.exists() {
+        edit_file(&path)?;
+        println!("Editing entry {}", path.display());
+        return Ok(());
+    }
+
     let filled = prompt_metrics(&cfg.metric)?;
     let template = std::fs::read_to_string(dir.join("template.md")).unwrap_or_default();
 
