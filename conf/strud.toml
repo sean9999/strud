@@ -1,7 +1,4 @@
-# strud schema configuration. Edit freely.
-
-# Diary directory override. Optional; --dir flag and $STRUD_DIR take priority.
-# dir = "~/.strud"
+#	structured data for strud
 
 [[metric]]
 name = "mood"
