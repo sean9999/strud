@@ -2,31 +2,9 @@ use anyhow::{Result, bail};
 use std::fs;
 use std::path::PathBuf;
 
-const STARTER_TOML: &str = "# strud schema configuration. Edit freely.\n\
-# Run `strud init` to regenerate; pass --force to overwrite this file.\n\
-\n\
-[[metric]]\n\
-name = \"mood\"\n\
-type = \"int\"\n\
-min = 1\n\
-max = 5\n\
-\n\
-[[metric]]\n\
-name = \"sleep_hours\"\n\
-type = \"float\"\n\
-min = 0\n\
-max = 24\n\
-\n\
-[[metric]]\n\
-name = \"energy\"\n\
-type = \"enum\"\n\
-values = [\"low\", \"medium\", \"high\"]\n\
-\n\
-[[metric]]\n\
-name = \"exercised\"\n\
-type = \"bool\"\n";
+const STARTER_TOML: &str = include_str!("../../assets/strud.toml");
 
-const STARTER_TEMPLATE: &str = "## Notes\n\n## Wins\n";
+const STARTER_TEMPLATE: &str = include_str!("../../assets/template.md");
 
 pub fn run(dir: Option<PathBuf>, force: bool) -> Result<()> {
     let dir = match dir {
@@ -37,7 +15,7 @@ pub fn run(dir: Option<PathBuf>, force: bool) -> Result<()> {
     fs::create_dir_all(dir.join("entries"))?;
 
     let toml_path = dir.join("strud.toml");
-    let tpl_path = dir.join("default.template.md");
+    let tpl_path = dir.join("template.md");
 
     if toml_path.exists() {
         if force {

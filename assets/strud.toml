@@ -1,4 +1,5 @@
-#	structured data for strud
+# strud schema configuration. Edit freely.
+# Run `strud init` to regenerate; pass --force to overwrite this file.
 
 [[metric]]
 name = "mood"

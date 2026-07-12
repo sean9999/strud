@@ -171,7 +171,7 @@ fn edit_body(template: &str) -> Result<String> {
     let editor = std::env::var("EDITOR")
         .or_else(|_| std::env::var("VISUAL"))
         .unwrap_or_else(|_| "vi".to_string());
-    let tmp = tempfile::NamedTempFile::new()?;
+    let tmp = tempfile::Builder::new().suffix(".md").tempfile()?;
     std::fs::write(tmp.path(), template)?;
     let mut parts: Vec<String> = editor.split_whitespace().map(String::from).collect();
     if parts.is_empty() {
