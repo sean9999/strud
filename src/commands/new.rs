@@ -33,7 +33,7 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
     let mut entries = parse_file(&text)?;
 
     let filled = prompt_metrics(&cfg.metric)?;
-    let template = std::fs::read_to_string(dir.join("default.template.md")).unwrap_or_default();
+    let template = std::fs::read_to_string(dir.join("template.md")).unwrap_or_default();
     let body = edit_body(&template)?;
 
     let fm_text = render_frontmatter(&date, &cfg.metric, &filled);
