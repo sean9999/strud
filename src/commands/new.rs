@@ -2,12 +2,12 @@ use anyhow::{Context, Result};
 use chrono::{Local, Timelike};
 use dialoguer::Input;
 use serde_yaml::Mapping;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::config::{Metric, MetricType};
 use crate::diary;
 use crate::entry::Entry;
-use crate::parse::{parse_dt, parse_file, render_file};
+use crate::parse::{parse_dt, render_file};
 
 #[derive(Debug, Clone)]
 enum MetricValue {
@@ -29,36 +29,30 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
 
     let file_date = date.date();
     let path = diary::entries_dir(&dir).join(format!("{}.md", file_date.format("%Y-%m-%d")));
-    let text = std::fs::read_to_string(&path).ok().unwrap_or_default();
-    let mut entries = parse_file(&text)?;
 
     let filled = prompt_metrics(&cfg.metric)?;
     let template = std::fs::read_to_string(dir.join("template.md")).unwrap_or_default();
-    let body = edit_body(&template)?;
 
+    // `strud new` always creates a fresh file: compose the front matter and
+    // body template into their final form, write them exactly where they
+    // belong, then hand the file itself to $EDITOR.
     let fm_text = render_frontmatter(&date, &cfg.metric, &filled);
     let frontmatter: Mapping = serde_yaml::from_str(&fm_text).unwrap_or_default();
     let entry = Entry {
         date: Some(date),
         frontmatter,
         fm_text,
-        body,
+        body: template.trim_end_matches('\n').to_string(),
     };
 
-    // Insert keeping entries ascending by date; equal dates go after existing
-    // entries (stable). Dateless entries stay where they are.
-    let pos = entries
-        .iter()
-        .position(|e| matches!(e.date, Some(d) if d > date))
-        .unwrap_or(entries.len());
-    entries.insert(pos, entry);
-
-    let out = render_file(&entries);
+    let out = render_file(std::slice::from_ref(&entry));
     std::fs::create_dir_all(diary::entries_dir(&dir))?;
     std::fs::write(&path, out)?;
 
+    edit_file(&path)?;
+
     println!(
-        "Added entry {} to {}",
+        "Created entry {} at {}",
         date.format("%Y-%m-%dT%H:%M"),
         path.display()
     );
@@ -167,25 +161,22 @@ fn render_frontmatter(
     lines.join("\n")
 }
 
-fn edit_body(template: &str) -> Result<String> {
+fn edit_file(path: &Path) -> Result<()> {
     let editor = std::env::var("EDITOR")
         .or_else(|_| std::env::var("VISUAL"))
         .unwrap_or_else(|_| "vi".to_string());
-    let tmp = tempfile::Builder::new().suffix(".md").tempfile()?;
-    std::fs::write(tmp.path(), template)?;
     let mut parts: Vec<String> = editor.split_whitespace().map(String::from).collect();
     if parts.is_empty() {
-        return Ok(template.to_string());
+        return Ok(());
     }
     let prog = parts.remove(0);
     let status = std::process::Command::new(prog)
         .args(parts)
-        .arg(tmp.path())
+        .arg(path)
         .status()
         .with_context(|| format!("failed to run editor '{}'", editor))?;
     if !status.success() {
         anyhow::bail!("editor '{}' exited with status {}", editor, status);
     }
-    let body = std::fs::read_to_string(tmp.path())?;
-    Ok(body.trim_end_matches('\n').to_string())
+    Ok(())
 }

@@ -516,7 +516,6 @@ dependencies = [
  "dialoguer",
  "serde",
  "serde_yaml",
- "tempfile",
  "toml",
 ]
 
