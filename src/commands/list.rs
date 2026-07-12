@@ -32,12 +32,15 @@ pub fn run(
     };
 
     let mut files: Vec<PathBuf> = Vec::new();
-    for e in std::fs::read_dir(&dir)? {
-        let p = e?.path();
-        if let Some(name) = p.file_name().and_then(|n| n.to_str())
-            && is_day_file(name)
-        {
-            files.push(p);
+    let entries_dir = diary::entries_dir(&dir);
+    if entries_dir.is_dir() {
+        for e in std::fs::read_dir(&entries_dir)? {
+            let p = e?.path();
+            if let Some(name) = p.file_name().and_then(|n| n.to_str())
+                && is_day_file(name)
+            {
+                files.push(p);
+            }
         }
     }
     files.sort();

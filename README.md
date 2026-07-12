@@ -42,8 +42,10 @@ The diary directory resolves to the `--dir` flag if given, else `~/.strud/`.
 
 ## File format
 
-One `YYYY-MM-DD.md` file per day. Each entry is a `---`-delimited front-matter
-block followed by a Markdown body; entries are blank-line separated.
+The diary dir holds `strud.toml` and `default.template.md` at its root, with
+one `entries/YYYY-MM-DD.md` file per day. Each entry is a `---`-delimited
+front-matter block followed by a Markdown body; entries are blank-line
+separated.
 
 ```markdown
 ---

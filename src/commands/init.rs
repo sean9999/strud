@@ -34,6 +34,7 @@ pub fn run(dir: Option<PathBuf>, force: bool) -> Result<()> {
         None => crate::diary::resolve_dir(None)?,
     };
     fs::create_dir_all(&dir)?;
+    fs::create_dir_all(dir.join("entries"))?;
 
     let toml_path = dir.join("strud.toml");
     let tpl_path = dir.join("default.template.md");

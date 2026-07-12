@@ -21,12 +21,13 @@ File layout inside the diary directory:
 <diary-dir>/
   strud.toml            # schema + config (see §3)
   default.template.md   # body template, user-editable (see §6)
-  2026-07-12.md
-  2026-07-13.md
-  ...
+  entries/
+    2026-07-12.md
+    2026-07-13.md
+    ...
 ```
 
-Files are named `YYYY-MM-DD.md` (zero-padded, Gregorian). They are **flat** in the diary directory — no year/month subdirectories in v1.
+Config (`strud.toml`) and the body template live at the diary dir root; all day files live under an `entries/` subdirectory. Day files are named `YYYY-MM-DD.md` (zero-padded, Gregorian) and are **flat** inside `entries/` — no year/month subdirectories in v1.
 
 ### Entry format: one front-matter block per entry
 
@@ -149,7 +150,7 @@ A validation failure (bad type, out of range, missing `date`, or date/file misma
 
 ### `strud init [<dir>]`
 
-Scaffolds a new diary. `<dir>` defaults to the resolution default (§2). Creates the directory if missing and writes two files:
+Scaffolds a new diary. `<dir>` defaults to the resolution default (§2). Creates the directory (and its `entries/` subdirectory) if missing and writes two files at the root:
 
 - a starter `strud.toml` containing the example schema from §3 (commented to be editable), and
 - a `default.template.md` body scaffold, e.g.:

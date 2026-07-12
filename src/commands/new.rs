@@ -28,7 +28,7 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
     };
 
     let file_date = date.date();
-    let path = dir.join(format!("{}.md", file_date.format("%Y-%m-%d")));
+    let path = diary::entries_dir(&dir).join(format!("{}.md", file_date.format("%Y-%m-%d")));
     let text = std::fs::read_to_string(&path).ok().unwrap_or_default();
     let mut entries = parse_file(&text)?;
 
@@ -54,6 +54,7 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
     entries.insert(pos, entry);
 
     let out = render_file(&entries);
+    std::fs::create_dir_all(diary::entries_dir(&dir))?;
     std::fs::write(&path, out)?;
 
     println!(
