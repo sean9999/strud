@@ -10,10 +10,10 @@ pub fn validate_entry(e: &Entry, cfg: &Config) -> Vec<String> {
         issues.push("missing or invalid 'date'".to_string());
     }
     for m in &cfg.metric {
-        if let Some(v) = e.frontmatter.get(&serde_yaml::Value::String(m.name.clone())) {
-            if let Err(msg) = m.validate_value(v) {
-                issues.push(format!("{}: {}", m.name, msg));
-            }
+        if let Some(v) = e.frontmatter.get(serde_yaml::Value::String(m.name.clone()))
+            && let Err(msg) = m.validate_value(v)
+        {
+            issues.push(format!("{}: {}", m.name, msg));
         }
     }
     issues

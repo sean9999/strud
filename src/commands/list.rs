@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use chrono::{Days, Local, NaiveDate, NaiveDateTime};
 use serde_yaml::Value;
 use std::path::PathBuf;
@@ -15,7 +15,7 @@ pub fn run(
     last: Option<usize>,
     raw: bool,
 ) -> Result<()> {
-    let dir = diary::resolve_dir(dir, None)?;
+    let dir = diary::resolve_dir(dir)?;
     let cfg = crate::config::load(&dir)?;
 
     let date_f = parse_date_arg(date, "date")?;
@@ -23,7 +23,8 @@ pub fn run(
     let until_f = parse_date_arg(until, "until")?;
 
     let today = Local::now().date_naive();
-    let default_range = date_f.is_none() && since_f.is_none() && until_f.is_none() && last.is_none();
+    let default_range =
+        date_f.is_none() && since_f.is_none() && until_f.is_none() && last.is_none();
     let since_eff = if default_range {
         Some(today - Days::new(13))
     } else {
@@ -33,10 +34,10 @@ pub fn run(
     let mut files: Vec<PathBuf> = Vec::new();
     for e in std::fs::read_dir(&dir)? {
         let p = e?.path();
-        if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-            if is_day_file(name) {
-                files.push(p);
-            }
+        if let Some(name) = p.file_name().and_then(|n| n.to_str())
+            && is_day_file(name)
+        {
+            files.push(p);
         }
     }
     files.sort();
@@ -47,20 +48,20 @@ pub fn run(
             .filter_map(|p| {
                 let name = p.file_name().unwrap().to_str().unwrap();
                 let d = NaiveDate::parse_from_str(&name[..10], "%Y-%m-%d").ok()?;
-                if let Some(s) = since_eff {
-                    if d < s {
-                        return None;
-                    }
+                if let Some(s) = since_eff
+                    && d < s
+                {
+                    return None;
                 }
-                if let Some(u) = until_f {
-                    if d > u {
-                        return None;
-                    }
+                if let Some(u) = until_f
+                    && d > u
+                {
+                    return None;
                 }
-                if let Some(df) = date_f {
-                    if d != df {
-                        return None;
-                    }
+                if let Some(df) = date_f
+                    && d != df
+                {
+                    return None;
                 }
                 Some((d, p))
             })
@@ -99,29 +100,29 @@ pub fn run(
                 }
             };
             let ed = dt.date();
-            if let Some(s) = since_eff {
-                if ed < s {
-                    continue;
-                }
+            if let Some(s) = since_eff
+                && ed < s
+            {
+                continue;
             }
-            if let Some(u) = until_f {
-                if ed > u {
-                    continue;
-                }
+            if let Some(u) = until_f
+                && ed > u
+            {
+                continue;
             }
-            if let Some(df) = date_f {
-                if ed != df {
-                    continue;
-                }
+            if let Some(df) = date_f
+                && ed != df
+            {
+                continue;
             }
-            if let Some(fd) = file_date {
-                if fd != ed {
-                    eprintln!(
-                        "warning: {} entry {} date does not match filename",
-                        p.display(),
-                        dt.format("%Y-%m-%dT%H:%M")
-                    );
-                }
+            if let Some(fd) = file_date
+                && fd != ed
+            {
+                eprintln!(
+                    "warning: {} entry {} date does not match filename",
+                    p.display(),
+                    dt.format("%Y-%m-%dT%H:%M")
+                );
             }
             let issues = validate_entry(e, &cfg);
             if !issues.is_empty() {
@@ -136,7 +137,7 @@ pub fn run(
             for m in &cfg.metric {
                 let cell = e
                     .frontmatter
-                    .get(&Value::String(m.name.clone()))
+                    .get(Value::String(m.name.clone()))
                     .map(value_to_cell)
                     .unwrap_or_default();
                 row.push(cell);
@@ -145,7 +146,7 @@ pub fn run(
         }
     }
 
-    rows.sort_by(|a, b| a.0.cmp(&b.0));
+    rows.sort_by_key(|(d, _)| *d);
     if let Some(n) = last {
         let start = rows.len().saturating_sub(n);
         rows = rows[start..].to_vec();

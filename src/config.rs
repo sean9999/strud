@@ -28,9 +28,6 @@ pub struct Metric {
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct Config {
     #[serde(default)]
-    #[allow(dead_code)]
-    pub dir: Option<String>,
-    #[serde(default)]
     pub metric: Vec<Metric>,
 }
 
@@ -93,15 +90,15 @@ impl Metric {
     }
 
     fn check_range(&self, n: f64) -> Result<(), String> {
-        if let Some(min) = self.min {
-            if n < min {
-                return Err(format!("min {}", min));
-            }
+        if let Some(min) = self.min
+            && n < min
+        {
+            return Err(format!("min {}", min));
         }
-        if let Some(max) = self.max {
-            if n > max {
-                return Err(format!("max {}", max));
-            }
+        if let Some(max) = self.max
+            && n > max
+        {
+            return Err(format!("max {}", max));
         }
         Ok(())
     }

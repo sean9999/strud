@@ -18,7 +18,7 @@ enum MetricValue {
 }
 
 pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
-    let dir = diary::resolve_dir(dir, None)?;
+    let dir = diary::resolve_dir(dir)?;
     let cfg = crate::config::load(&dir)?;
 
     let now = Local::now().naive_local();
@@ -94,29 +94,29 @@ fn parse_metric_value(m: &Metric, s: &str) -> Result<MetricValue, String> {
     match m.ty {
         MetricType::Int => {
             let n: i64 = s.parse().map_err(|_| "expected integer".to_string())?;
-            if let Some(min) = m.min {
-                if (n as f64) < min {
-                    return Err(format!("min {}", min));
-                }
+            if let Some(min) = m.min
+                && (n as f64) < min
+            {
+                return Err(format!("min {}", min));
             }
-            if let Some(max) = m.max {
-                if (n as f64) > max {
-                    return Err(format!("max {}", max));
-                }
+            if let Some(max) = m.max
+                && (n as f64) > max
+            {
+                return Err(format!("max {}", max));
             }
             Ok(MetricValue::Int(n))
         }
         MetricType::Float => {
             let n: f64 = s.parse().map_err(|_| "expected number".to_string())?;
-            if let Some(min) = m.min {
-                if n < min {
-                    return Err(format!("min {}", min));
-                }
+            if let Some(min) = m.min
+                && n < min
+            {
+                return Err(format!("min {}", min));
             }
-            if let Some(max) = m.max {
-                if n > max {
-                    return Err(format!("max {}", max));
-                }
+            if let Some(max) = m.max
+                && n > max
+            {
+                return Err(format!("max {}", max));
             }
             Ok(MetricValue::Float(n))
         }

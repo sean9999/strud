@@ -68,15 +68,15 @@ The free-text prose following each entry's front-matter, up to the next `---` bo
 
 ## 2. Diary directory resolution
 
-The diary directory is resolved in this order:
+The diary directory is resolved simply: the `--dir <path>` flag if given,
+otherwise `~/.strud/`.
 
-1. `--dir <path>` CLI flag (highest priority), if present.
-2. The `dir` key in `strud.toml`, if the config is found.
-3. Default: `$STRUD_DIR` env var, else `~/.strud/`.
+`strud.toml` lives **at the root of the diary directory** (see §3), so in the
+default case config and entries coexist in `~/.strud/`. When `--dir` overrides,
+the tool looks for `strud.toml` inside that directory.
 
-`strud.toml` itself lives **at the root of the diary directory** (see §3). So in the default case, config and entries coexist in `~/.strud/`. When `--dir` overrides, the tool looks for `strud.toml` inside that directory.
-
-The tool errors clearly if the resolved directory does not contain a `strud.toml` and suggests running `strud init`.
+The tool errors clearly if the resolved directory does not contain a
+`strud.toml` and suggests running `strud init`.
 
 ---
 
@@ -89,8 +89,6 @@ The schema is declared in TOML at `<diary-dir>/strud.toml`. v1 supports `int`, `
 Every metric has a `type`. Number types accept optional `min`/`max` (inclusive) for range validation. `enum` requires a `values` list. **All metrics are optional** — the schema defines types and ranges, not presence. A user may skip any metric at entry time (see §6).
 
 ```toml
-dir = "~/.strud"
-
 [[metric]]
 name = "mood"
 type = "int"
@@ -114,8 +112,6 @@ type = "bool"
 ```
 
 Metric names must be valid YAML map keys (lowercase, underscore-separated by convention). Names are case-sensitive. The reserved name `date` may not be reused for a metric.
-
-The `dir` key in `strud.toml` is optional and only meaningful when `strud.toml` is loaded from a non-default location; it is overridden by `--dir`.
 
 ---
 

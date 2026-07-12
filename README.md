@@ -38,8 +38,7 @@ strud list --last 7
 strud list --raw                      # dump underlying Markdown
 ```
 
-The diary directory resolves in this order: `--dir` flag, `$STRUD_DIR`,
-`~/.strud/`.
+The diary directory resolves to the `--dir` flag if given, else `~/.strud/`.
 
 ## File format
 

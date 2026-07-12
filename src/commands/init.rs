@@ -1,11 +1,9 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 const STARTER_TOML: &str = "# strud schema configuration. Edit freely.\n\
-\n\
-# Diary directory override. Optional; --dir flag and $STRUD_DIR take priority.\n\
-# dir = \"~/.strud\"\n\
+# Run `strud init` to regenerate; pass --force to overwrite this file.\n\
 \n\
 [[metric]]\n\
 name = \"mood\"\n\
@@ -30,11 +28,10 @@ type = \"bool\"\n";
 
 const STARTER_TEMPLATE: &str = "## Notes\n\n## Wins\n";
 
-pub fn run(dir: &Path, force: bool) -> Result<()> {
-    let dir = if dir.as_os_str().is_empty() {
-        crate::diary::resolve_dir(None, None)?
-    } else {
-        dir.to_path_buf()
+pub fn run(dir: Option<PathBuf>, force: bool) -> Result<()> {
+    let dir = match dir {
+        Some(d) => d,
+        None => crate::diary::resolve_dir(None)?,
     };
     fs::create_dir_all(&dir)?;
 
@@ -45,7 +42,10 @@ pub fn run(dir: &Path, force: bool) -> Result<()> {
         if force {
             fs::write(&toml_path, STARTER_TOML)?;
         } else {
-            bail!("{} already exists; pass --force to overwrite", toml_path.display());
+            bail!(
+                "{} already exists; pass --force to overwrite",
+                toml_path.display()
+            );
         }
     } else {
         fs::write(&toml_path, STARTER_TOML)?;

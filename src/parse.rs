@@ -51,13 +51,19 @@ pub fn parse_file(text: &str) -> Result<Vec<Entry>> {
     while k + 1 < fences.len() {
         let open = fences[k];
         let close = fences[k + 1];
-        let fm_text = lines[open + 1..close].join("\n").trim_matches('\n').to_string();
+        let fm_text = lines[open + 1..close]
+            .join("\n")
+            .trim_matches('\n')
+            .to_string();
         let body_end = if k + 2 < fences.len() {
             fences[k + 2]
         } else {
             lines.len()
         };
-        let body = lines[close + 1..body_end].join("\n").trim_matches('\n').to_string();
+        let body = lines[close + 1..body_end]
+            .join("\n")
+            .trim_matches('\n')
+            .to_string();
         let frontmatter: Mapping = if fm_text.is_empty() {
             Mapping::new()
         } else {
@@ -77,7 +83,7 @@ pub fn parse_file(text: &str) -> Result<Vec<Entry>> {
 }
 
 fn extract_date(fm: &Mapping) -> Option<NaiveDateTime> {
-    let v = fm.get(&Value::String("date".into()))?;
+    let v = fm.get(Value::String("date".into()))?;
     scalar_to_string(v).as_deref().and_then(parse_dt)
 }
 
@@ -92,9 +98,14 @@ fn scalar_to_string(v: &Value) -> Option<String> {
 
 /// Parse an ISO-ish datetime, accepting minute or second precision.
 pub fn parse_dt(s: &str) -> Option<NaiveDateTime> {
-    ["%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
-        .iter()
-        .find_map(|f| NaiveDateTime::parse_from_str(s, f).ok())
+    [
+        "%Y-%m-%dT%H:%M",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
+    ]
+    .iter()
+    .find_map(|f| NaiveDateTime::parse_from_str(s, f).ok())
 }
 
 /// Re-render a day file from its entries. Existing front-matter and body text

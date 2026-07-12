@@ -19,9 +19,8 @@ struct Cli {
 enum Cmd {
     /// Scaffold a new diary directory with config and template
     Init {
-        /// Target directory (default: $STRUD_DIR or ~/.strud)
-        #[arg(default_value = "")]
-        dir: PathBuf,
+        /// Target directory (default: ~/.strud)
+        dir: Option<PathBuf>,
         /// Overwrite an existing strud.toml
         #[arg(long)]
         force: bool,
@@ -59,7 +58,7 @@ enum Cmd {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.cmd {
-        Cmd::Init { dir, force } => commands::init::run(&dir, force),
+        Cmd::Init { dir, force } => commands::init::run(dir, force),
         Cmd::New { dir, date } => commands::new::run(dir, date),
         Cmd::List {
             dir,
