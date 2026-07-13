@@ -39,7 +39,9 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
     }
 
     let filled = prompt_metrics(&cfg.metric)?;
-    let template = std::fs::read_to_string(dir.join("template.md")).unwrap_or_default();
+    let template = std::fs::read_to_string(dir.join("template.md"))
+        .unwrap_or_default()
+        .replace("{{TIME}}", &date.format("%H:%M").to_string());
 
     // `strud new` always creates a fresh file: compose the front matter and
     // body template into their final form, write them exactly where they
