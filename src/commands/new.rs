@@ -30,22 +30,28 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
     let file_date = date.date();
     let path = diary::entries_dir(&dir).join(format!("{}.md", file_date.format("%Y-%m-%d")));
 
-    // If an entry already exists for this day, skip the prompts entirely and
-    // just open the whole file for editing.
-    if path.exists() {
-        edit_file(&path)?;
-        println!("Editing entry {}", path.display());
-        return Ok(());
-    }
-
-    let filled = prompt_metrics(&cfg.metric)?;
+    // Interpolate the body template once: placeholders like {{TIME}} are
+    // filled with the current time. Used both when creating a new day file
+    // and when appending a new section to an existing one.
     let template = std::fs::read_to_string(dir.join("template.md"))
         .unwrap_or_default()
         .replace("{{TIME}}", &date.format("%H:%M").to_string());
 
-    // `strud new` always creates a fresh file: compose the front matter and
-    // body template into their final form, write them exactly where they
-    // belong, then hand the file itself to $EDITOR.
+    // If an entry already exists for this day, append the interpolated
+    // template as a new section and open the file for editing — don't create
+    // a fresh file or re-prompt for metrics.
+    if path.exists() {
+        append_template(&path, &template)?;
+        edit_file(&path)?;
+        println!("Appended to entry {}", path.display());
+        return Ok(());
+    }
+
+    let filled = prompt_metrics(&cfg.metric)?;
+
+    // No file yet for this day: compose the front matter and body template
+    // into their final form, write them exactly where they belong, then hand
+    // the file itself to $EDITOR.
     let fm_text = render_frontmatter(&date, &cfg.metric, &filled);
     let frontmatter: Mapping = serde_yaml::from_str(&fm_text).unwrap_or_default();
     let entry = Entry {
@@ -169,6 +175,20 @@ fn render_frontmatter(
         }
     }
     lines.join("\n")
+}
+
+fn append_template(path: &Path, template: &str) -> Result<()> {
+    let section = template.trim();
+    if section.is_empty() {
+        return Ok(());
+    }
+    let existing = std::fs::read_to_string(path).unwrap_or_default();
+    let mut out = existing.trim_end_matches('\n').to_string();
+    out.push_str("\n\n");
+    out.push_str(section);
+    out.push('\n');
+    std::fs::write(path, out)?;
+    Ok(())
 }
 
 fn edit_file(path: &Path) -> Result<()> {
