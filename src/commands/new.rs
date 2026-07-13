@@ -30,12 +30,11 @@ pub fn run(dir: Option<PathBuf>, date: Option<String>) -> Result<()> {
     let file_date = date.date();
     let path = diary::entries_dir(&dir).join(format!("{}.md", file_date.format("%Y-%m-%d")));
 
-    // Interpolate the body template once: placeholders like {{TIME}} are
-    // filled with the current time. Used both when creating a new day file
-    // and when appending a new section to an existing one.
-    let template = std::fs::read_to_string(dir.join("template.md"))
-        .unwrap_or_default()
-        .replace("{{TIME}}", &date.format("%H:%M").to_string());
+    // Interpolate the body template once: {{format <source> "<strftime>"}}
+    // tags are filled with the current / entry time. Used both when creating
+    // a new day file and when appending a new section to an existing one.
+    let raw = std::fs::read_to_string(dir.join("template.md")).unwrap_or_default();
+    let template = crate::template::render(&raw, now, date)?;
 
     // If an entry already exists for this day, append the interpolated
     // template as a new section and open the file for editing — don't create
