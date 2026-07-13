@@ -29,8 +29,9 @@ struct TemplateData {
     date: String,
 }
 
-/// Render `template`, substituting `{{format <source> "<strftime>"}}` with the
-/// formatted timestamp. Unknown variables render empty (Handlebars default).
+//// Render `template`, substituting `{{format <source> "<strftime>"}}` with the
+//// formatted timestamp. Unknown variables generally render empty (Handlebars default),
+//// but using an unknown `<source>` with the `format` helper is treated as an error.
 pub fn render(template: &str, now: NaiveDateTime, date: NaiveDateTime) -> Result<String> {
     let mut hbs = Handlebars::new();
     hbs.register_helper("format", Box::new(format_helper));
