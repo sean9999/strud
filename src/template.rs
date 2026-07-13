@@ -30,10 +30,14 @@ struct TemplateData {
 }
 
 //// Render `template`, substituting `{{format <source> "<strftime>"}}` with the
-//// formatted timestamp. Unknown variables generally render empty (Handlebars default),
-//// but using an unknown `<source>` with the `format` helper is treated as an error.
+//// formatted timestamp. Strict mode is on, so any tag that cannot be resolved
+//// to a value — an unknown variable like `{{TIME}}`, an unknown `format`
+//// source, or malformed Handlebars syntax — is an error rather than silently
+//// rendering empty. Callers should surface the error so the user can fix
+//// `template.md` instead of getting a blank section.
 pub fn render(template: &str, now: NaiveDateTime, date: NaiveDateTime) -> Result<String> {
     let mut hbs = Handlebars::new();
+    hbs.set_strict_mode(true);
     hbs.register_helper("format", Box::new(format_helper));
     let data = TemplateData {
         now: now.format("%Y-%m-%dT%H:%M").to_string(),
@@ -107,5 +111,51 @@ mod tests {
     fn unknown_source_errors() {
         let t = render("## {{format bogus \"%H:%M\"}}", dt(), dt());
         assert!(t.is_err());
+    }
+
+    fn chain(err: anyhow::Error) -> String {
+        let mut s = err.to_string();
+        let mut src = err.source();
+        while let Some(e) = src {
+            s.push_str(" :: ");
+            s.push_str(&e.to_string());
+            src = e.source();
+        }
+        s
+    }
+
+    #[test]
+    fn undefined_variable_errors() {
+        // A bare {{TIME}} (no helper) resolves to nothing. It must error
+        // rather than silently rendering empty — the original bug.
+        let t = render("##  {{TIME}}", dt(), dt());
+        assert!(t.is_err(), "expected error for undefined {{TIME}}");
+        let msg = chain(t.unwrap_err());
+        assert!(
+            msg.contains("TIME"),
+            "error should name the undefined variable: {msg}"
+        );
+    }
+
+    #[test]
+    fn unclosed_tag_errors() {
+        let t = render("## {{format now \"%H:%M\"", dt(), dt());
+        assert!(t.is_err(), "expected error for unclosed tag");
+    }
+
+    #[test]
+    fn missing_helper_argument_errors() {
+        // {{format now}} lacks the strftime pattern argument.
+        let t = render("## {{format now}}", dt(), dt());
+        assert!(t.is_err(), "expected error for missing helper argument");
+    }
+
+    #[test]
+    fn undefined_variable_does_not_emit_partial_output() {
+        // The whole render must fail; no partial `##  ` should come back.
+        let t = render("before {{NOPE}} after", dt(), dt());
+        assert!(t.is_err());
+        let msg = chain(t.unwrap_err());
+        assert!(msg.contains("NOPE"), "error should name NOPE: {msg}");
     }
 }
