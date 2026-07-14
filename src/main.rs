@@ -3,6 +3,7 @@ mod config;
 mod diary;
 mod entry;
 mod parse;
+mod template;
 mod validate;
 
 use clap::{Parser, Subcommand};
